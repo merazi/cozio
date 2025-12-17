@@ -382,6 +382,12 @@ button:hover {
     min-height: 1px; 
 }
 
+.header-icon {
+    height: 30px; /* Adjust size as needed */
+    width: 30px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
 
 /* --- Footer & Sync Buttons --- */
 .cloud-sync-footer {
