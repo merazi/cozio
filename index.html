@@ -26,21 +26,37 @@
             Cozio 🚀
         </h1>
         <div class="header-actions">
-            <button id="add-list-btn" title="Create New List"><i class="fas fa-plus"></i> Add New List</button>
+            <button id="auth-action-btn" title="Sign In / Sign Out" class="auth-btn"><i class="fas fa-user-circle"></i> Sign In</button>
+            
+            <button id="add-list-btn" title="Create New List" style="display: none;"><i class="fas fa-plus"></i> Add New List</button>
+            
             <button id="theme-toggle" title="Toggle Dark/Light Mode"><i class="fas fa-sun"></i></button>
         </div>
         
-        </header>
+    </header>
 
     <main id="app-container">
-        <div id="kanban-board">
+        
+        <div id="auth-overlay" style="display: none;">
+            <div id="auth-container">
+                <h2>Welcome to Cozio</h2>
+                <p>Enter your email to sign in or register. We'll send you a secure, passwordless login link.</p>
+                <form id="email-form">
+                    <input type="email" id="email-input" placeholder="Your Email Address" required>
+                    <button type="submit" id="send-link-btn" class="auth-primary-btn">Send Sign-In Link</button>
+                </form>
+                <p id="auth-message" class="hidden-message"></p>
+            </div>
+        </div>
+        
+        <div id="kanban-board" style="display: none;"> 
         </div>
 
-        </main>
+    </main>
     
     <footer class="cloud-sync-footer">
-        <button id="dropbox-sync-btn" title="Sync with Firebase"><i class="fab fa-google"></i> Sync (Firebase Connected)</button>
-        <button id="drive-sync-btn" title="Sync with Google Drive"><i class="fab fa-google-drive"></i> Status</button>
+        <button id="dropbox-sync-btn" title="Sync with Firebase"><i class="fab fa-google"></i> Sign In to Sync</button>
+        <button id="drive-sync-btn" title="Sync Status"><i class="fab fa-google-drive"></i> Status</button>
     </footer>
 
     <script src="script.js"></script>
