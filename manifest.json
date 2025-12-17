@@ -1,0 +1,27 @@
+{
+  "name": "Cozio Kanban Tasks",
+  "short_name": "Cozio Tasks",
+  "description": "Simple Kanban task management board with cross-device synchronization.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1e2b4d",
+  "theme_color": "#34495e",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
