@@ -13,6 +13,10 @@ const themeToggleBtn = document.getElementById('theme-toggle');
 const dropboxSyncBtn = document.getElementById('dropbox-sync-btn');
 const driveSyncBtn = document.getElementById('drive-sync-btn');
 
+// NEW: Mobile Selector
+const listSelector = document.getElementById('list-select'); 
+
+
 // --- Firebase Configuration ---
 // <<< CRITICAL: REPLACE ALL OF THESE WITH YOUR ACTUAL CONFIG FROM FIREBASE CONSOLE >>>
 const FIREBASE_CONFIG = {
@@ -25,7 +29,6 @@ const FIREBASE_CONFIG = {
   appId: "1:283476380138:web:7e84ee31b0345e0630ca93",
   measurementId: "G-YKN7LSDDLN"
 };
-
 
 let firebaseApp = null;
 let database = null;
@@ -271,11 +274,29 @@ function renderListTasks(listName, container) {
  */
 function renderKanbanBoard() {
     kanbanBoard.innerHTML = ''; 
+    const listNames = Object.keys(todoLists);
 
-    Object.keys(todoLists).forEach(listName => {
+    // 1. Populate the mobile selector options
+    populateMobileListSelector(listNames);
+    
+    // Ensure the current list exists
+    if (!todoLists[currentListName]) {
+        currentListName = getFirstListName();
+    }
+    
+    // 2. Render all list columns
+    listNames.forEach(listName => {
         const column = document.createElement('div');
         column.className = 'list-column';
         column.dataset.listName = listName;
+        
+        // Mobile-specific attribute for CSS hiding/showing
+        if (listName === currentListName) {
+            column.dataset.listNameActive = 'true';
+        } else {
+            column.dataset.listNameActive = 'false';
+        }
+
 
         const header = document.createElement('div');
         header.className = 'list-header';
@@ -319,7 +340,69 @@ function renderKanbanBoard() {
     });
     
     document.addEventListener('click', closeAllDropdowns);
+    
+    // 3. Ensure visibility is correct after rendering
+    updateMobileListVisibility(currentListName);
 }
+
+/**
+ * Populates the <select> element with list names and sets the current value.
+ */
+function populateMobileListSelector(listNames) {
+    if (!listSelector) return;
+
+    // Remove old listeners to prevent duplication on re-render
+    listSelector.removeEventListener('change', handleListSelectionChange);
+
+    listSelector.innerHTML = ''; // Clear previous options
+    
+    listNames.forEach(listName => {
+        const option = document.createElement('option');
+        option.value = listName;
+        option.textContent = listName;
+        listSelector.appendChild(option);
+    });
+
+    listSelector.value = currentListName;
+    // Add the listener back
+    listSelector.addEventListener('change', handleListSelectionChange);
+}
+
+/**
+ * Handles selection change in the mobile list selector.
+ */
+function handleListSelectionChange(event) {
+    const selectedList = event.target.value;
+    if (selectedList && selectedList !== currentListName) {
+        currentListName = selectedList;
+        saveState(); // Update local storage and sync to Firebase
+        updateMobileListVisibility(currentListName);
+    }
+}
+
+/**
+ * Manages which list column is visible on mobile devices using CSS attributes.
+ */
+function updateMobileListVisibility(listName) {
+    // Check screen size to see if mobile display rules should apply
+    const isMobileView = window.innerWidth <= 768; 
+
+    const allColumns = document.querySelectorAll('.list-column');
+
+    allColumns.forEach(column => {
+        const isActive = column.dataset.listName === listName;
+        
+        // Toggle the CSS selector attribute
+        // CSS will use this attribute to show/hide the columns
+        column.dataset.listNameActive = isActive ? 'true' : 'false';
+    });
+    
+    // Also ensure the selector is updated (important for consistency)
+    if (listSelector) {
+        listSelector.value = listName;
+    }
+}
+
 
 /**
  * Adds a new task to the specified list.
@@ -331,6 +414,7 @@ function addTask(listName, textInput, dateInput) {
     if (taskText === '') return;
 
     const currentList = todoLists[listName];
+    // Simple ID generation
     const newId = currentList.length > 0 ? Math.max(...currentList.map(t => t.id)) + 1 : 1;
 
     currentList.push({
@@ -677,7 +761,6 @@ function initApp() {
     // 2. Initialize Firebase (replacing Dropbox)
     initFirebase();
     
-
     // 3. Render Initial State
     renderKanbanBoard();
 
@@ -699,6 +782,9 @@ function initApp() {
             });
         }
     });
+
+    // Handle resize events to properly switch between mobile/desktop views
+    window.addEventListener('resize', () => renderKanbanBoard());
 }
 
 // Start the application

@@ -23,10 +23,15 @@
     <header>
         <h1 class="app-title">
             <img src="/icon.png" alt="App Icon" class="header-icon">
-            Cozio
+            Cozio Tasks
         </h1>
         <div class="header-actions">
             <button id="theme-toggle" title="Toggle Dark/Light Mode"><i class="fas fa-sun"></i></button>
+        </div>
+        
+        <div id="mobile-list-selector-container">
+            <label for="list-select" class="sr-only">Select List</label>
+            <select id="list-select"></select>
         </div>
     </header>
 
@@ -40,7 +45,7 @@
     </main>
     
     <footer class="cloud-sync-footer">
-        <button id="dropbox-sync-btn" title="Sync with Firebase"><i class="fab fa-google"></i> Initialize Sync</button>
+        <button id="dropbox-sync-btn" title="Sync with Firebase"><i class="fab fa-google"></i> Sync (Firebase Connected)</button>
         <button id="drive-sync-btn" title="Sync with Google Drive"><i class="fab fa-google-drive"></i> Status</button>
     </footer>
 
