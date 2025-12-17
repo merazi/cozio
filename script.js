@@ -13,14 +13,36 @@ const themeToggleBtn = document.getElementById('theme-toggle');
 const dropboxSyncBtn = document.getElementById('dropbox-sync-btn');
 const driveSyncBtn = document.getElementById('drive-sync-btn');
 
+// --- Firebase Configuration ---
+// <<< CRITICAL: REPLACE ALL OF THESE WITH YOUR ACTUAL CONFIG FROM FIREBASE CONSOLE >>>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBkR3Y5b4YymPJdX48eggk9q6st06rh1t8",
+  authDomain: "cozio-2607f.firebaseapp.com",
+  databaseURL: "https://cozio-2607f-default-rtdb.firebaseio.com",
+  projectId: "cozio-2607f",
+  storageBucket: "cozio-2607f.firebasestorage.app",
+  messagingSenderId: "283476380138",
+  appId: "1:283476380138:web:7e84ee31b0345e0630ca93",
+  measurementId: "G-YKN7LSDDLN"
+};
+
+
+let firebaseApp = null;
+let database = null;
+let currentUser = null; 
+
 // --- Utility Functions ---
 
 /**
- * Saves the current state of all lists to LocalStorage.
+ * Saves the current state of all lists to LocalStorage AND to Firebase.
+ * All functions that modify todoLists MUST call this.
  */
 function saveState() {
     localStorage.setItem('todoLists', JSON.stringify(todoLists));
     localStorage.setItem('currentListName', currentListName); 
+    
+    // Attempt to synchronize with Firebase if connected
+    syncStateToFirebase();
 }
 
 /**
@@ -37,12 +59,11 @@ function getFirstListName() {
 function formatDate(dateString) {
     if (!dateString) return '';
     try {
-        const date = new Date(dateString + 'T00:00:00'); // Add T00:00:00 to prevent timezone issues
+        const date = new Date(dateString + 'T00:00:00'); 
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        // Normalize dates to midnight for comparison
         today.setHours(0, 0, 0, 0);
         tomorrow.setHours(0, 0, 0, 0);
 
@@ -59,7 +80,7 @@ function formatDate(dateString) {
             return date.toLocaleDateString('en-US');
         }
     } catch (e) {
-        return dateString; // Return raw string if formatting fails
+        return dateString; 
     }
 }
 
@@ -72,12 +93,11 @@ function isOverdue(dateString) {
     const today = new Date();
     today.setHours(0, 0, 0, 0); 
     
-    // An uncompleted task is overdue if its date is strictly before today's date
     return taskDate.getTime() < today.getTime();
 }
 
 
-// --- List Management (Unchanged) ---
+// --- List Management ---
 
 /**
  * Toggles the visibility of a list action dropdown.
@@ -104,7 +124,7 @@ function addNewList() {
         if (!todoLists[trimmedName]) {
             todoLists[trimmedName] = [];
             currentListName = trimmedName; 
-            saveState();
+            saveState(); // Calls syncStateToFirebase
             renderKanbanBoard();
         } else {
             alert('A list with that name already exists!');
@@ -133,7 +153,7 @@ function renameList(oldName) {
             currentListName = trimmedNewName;
         }
 
-        saveState();
+        saveState(); // Calls syncStateToFirebase
         renderKanbanBoard();
     }
 }
@@ -154,7 +174,7 @@ function deleteList(listToDelete) {
             currentListName = getFirstListName();
         }
         
-        saveState();
+        saveState(); // Calls syncStateToFirebase
         renderKanbanBoard();
     }
 }
@@ -247,7 +267,7 @@ function renderListTasks(listName, container) {
 }
 
 /**
- * Renders the entire Kanban board with all lists. (Unchanged)
+ * Renders the entire Kanban board with all lists.
  */
 function renderKanbanBoard() {
     kanbanBoard.innerHTML = ''; 
@@ -302,7 +322,7 @@ function renderKanbanBoard() {
 }
 
 /**
- * Adds a new task to the specified list. (Unchanged)
+ * Adds a new task to the specified list.
  */
 function addTask(listName, textInput, dateInput) {
     const taskText = textInput.value.trim();
@@ -311,19 +331,18 @@ function addTask(listName, textInput, dateInput) {
     if (taskText === '') return;
 
     const currentList = todoLists[listName];
-    // Note: The task ID implicitly determines creation order (lower ID is older)
     const newId = currentList.length > 0 ? Math.max(...currentList.map(t => t.id)) + 1 : 1;
 
     currentList.push({
         id: newId,
         text: taskText,
         completed: false,
-        dueDate: dueDate || null // Store as null if empty
+        dueDate: dueDate || null 
     });
 
     textInput.value = '';
     dateInput.value = ''; 
-    saveState();
+    saveState(); // Calls syncStateToFirebase
     
     const container = document.getElementById(`list-${listName.replace(/\s/g, '-')}`);
     if (container) {
@@ -332,7 +351,7 @@ function addTask(listName, textInput, dateInput) {
 }
 
 /**
- * Starts the editing process for a task description. (Unchanged)
+ * Starts the editing process for a task description.
  */
 function editTask(itemDiv, taskTextElement, taskId, listName) {
     const currentTask = todoLists[listName].find(t => t.id === taskId);
@@ -350,7 +369,7 @@ function editTask(itemDiv, taskTextElement, taskId, listName) {
         const newText = input.value.trim();
         if (newText) {
             currentTask.text = newText;
-            saveState();
+            saveState(); // Calls syncStateToFirebase
         }
         input.removeEventListener('blur', saveEdit);
         input.removeEventListener('keypress', handleKeydown);
@@ -372,7 +391,7 @@ function editTask(itemDiv, taskTextElement, taskId, listName) {
 }
 
 /**
- * Handles inline date editing for an existing task. (Unchanged)
+ * Handles inline date editing for an existing task.
  */
 function editDueDate(target) {
     const listName = target.dataset.listName;
@@ -396,7 +415,7 @@ function editDueDate(target) {
     const saveDate = () => {
         const newDate = input.value;
         currentTask.dueDate = newDate || null;
-        saveState();
+        saveState(); // Calls syncStateToFirebase
         
         input.removeEventListener('change', saveDate);
         input.removeEventListener('blur', saveDate);
@@ -411,7 +430,7 @@ function editDueDate(target) {
 
 
 /**
- * Handles all task and list actions. (Unchanged)
+ * Handles all task and list actions.
  */
 function handleBoardClick(event) {
     const target = event.target.closest('button, .list-name-text, .due-date-display');
@@ -447,10 +466,10 @@ function handleBoardClick(event) {
 
         if (target.classList.contains('toggle-btn')) {
             currentList[taskIndex].completed = !currentList[taskIndex].completed;
-            saveState();
+            saveState(); // Calls syncStateToFirebase
         } else if (target.classList.contains('delete-btn')) {
             currentList.splice(taskIndex, 1);
-            saveState();
+            saveState(); // Calls syncStateToFirebase
         } else if (target.classList.contains('edit-btn')) {
             editTask(itemDiv, taskTextElement, taskId, listName);
             return; 
@@ -473,7 +492,7 @@ function handleBoardClick(event) {
 }
 
 /**
- * Handle Enter key press on the inline text input fields. (Unchanged)
+ * Handle Enter key press on the inline text input fields.
  */
 function handleInputKeypress(event) {
     const target = event.target;
@@ -489,7 +508,7 @@ function handleInputKeypress(event) {
 
 
 /**
- * Closes all list action dropdowns if the click is outside. (Unchanged)
+ * Closes all list action dropdowns if the click is outside.
  */
 function closeAllDropdowns(event) {
     if (!event.target.closest('.list-actions-dropdown')) {
@@ -500,7 +519,7 @@ function closeAllDropdowns(event) {
 }
 
 
-// --- Theme Toggling (Unchanged) ---
+// --- Theme Toggling ---
 
 /**
  * Toggles between light and dark themes.
@@ -531,38 +550,146 @@ function initTheme() {
     icon.classList.add(initialTheme === 'light' ? 'fa-sun' : 'fa-moon');
 }
 
-// --- Cloud Sync Placeholders (Unchanged) ---
+
+// --- Firebase Synchronization Logic ---
 
 /**
- * Placeholder for Dropbox Sync Logic.
+ * Writes the local todoLists state to the Firebase Realtime Database.
  */
-function syncWithDropbox() {
-    alert('Dropbox sync started (Placeholder).');
+function syncStateToFirebase() {
+    if (currentUser && database) {
+        // The data path is /users/{uid}/data
+        const dataRef = database.ref('users/' + currentUser.uid + '/data');
+        dataRef.set(todoLists)
+            .then(() => {
+                console.log("Firebase sync successful.");
+            })
+            .catch(error => {
+                console.error("Firebase sync error:", error);
+            });
+    }
 }
 
 /**
- * Placeholder for Google Drive Sync Logic.
+ * Sets up a listener for real-time changes from Firebase.
+ */
+function listenForFirebaseChanges() {
+    if (currentUser && database) {
+        const dataRef = database.ref('users/' + currentUser.uid + '/data');
+        
+        // This 'value' listener triggers anytime data at the path changes.
+        dataRef.on('value', (snapshot) => {
+            const remoteData = snapshot.val();
+            if (remoteData) {
+                // Check if the remote data is newer/different
+                const localDataString = JSON.stringify(todoLists);
+                const remoteDataString = JSON.stringify(remoteData);
+
+                if (localDataString !== remoteDataString) {
+                    console.log("Remote changes detected. Updating local state.");
+                    todoLists = remoteData;
+                    // Note: We don't call saveState() here to avoid infinite loops, 
+                    // but we update local storage for persistence.
+                    localStorage.setItem('todoLists', remoteDataString);
+                    renderKanbanBoard();
+                    // Optionally alert the user: alert("Data updated from another device!");
+                }
+            } else {
+                // If remote data is empty (first login), push the local state up.
+                syncStateToFirebase();
+            }
+        }, (error) => {
+            console.error("Firebase listener error:", error);
+        });
+        
+        // Update the Sync button to indicate Firebase connection
+        dropboxSyncBtn.innerHTML = '<i class="fab fa-google"></i> Sync (Firebase Connected)';
+    }
+}
+
+
+/**
+ * Initializes Firebase and authenticates anonymously.
+ */
+function initFirebase() {
+    if (typeof firebase === 'undefined') {
+        console.error('Firebase SDK not loaded.');
+        dropboxSyncBtn.innerHTML = '<i class="fab fa-google"></i> Firebase Error';
+        return;
+    }
+    
+    // Initialize the app only once
+    if (!firebaseApp) {
+        firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+        database = firebase.database();
+    }
+
+    const auth = firebase.auth();
+
+    // Check for anonymous user login state
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            // User is signed in.
+            currentUser = user;
+            console.log("Authenticated as:", user.uid);
+            listenForFirebaseChanges();
+        } else {
+            // User is signed out. Sign in anonymously.
+            auth.signInAnonymously()
+                .then((result) => {
+                    currentUser = result.user;
+                    console.log("Signed in anonymously:", currentUser.uid);
+                    listenForFirebaseChanges();
+                })
+                .catch((error) => {
+                    console.error("Anonymous sign-in failed:", error);
+                    // Log the detailed error message for debugging
+                    console.error(error.message); 
+                    dropboxSyncBtn.innerHTML = '<i class="fab fa-google"></i> Firebase Failed';
+                });
+        }
+    });
+}
+
+/**
+ * The primary synchronization function (now maps to Firebase init/check).
+ */
+function syncWithFirebase() {
+    // If the user clicks sync, we simply ensure the local data is pushed up immediately.
+    syncStateToFirebase();
+    alert('Synchronization initiated with Firebase. Real-time updates are active.');
+}
+
+/**
+ * Placeholder for Google Drive Sync Logic (repurposed for Firebase).
  */
 function syncWithDrive() {
-    alert('Google Drive sync started (Placeholder).');
+    alert('Firebase is active and managing sync.');
 }
+
 
 // --- Initialization and Event Listeners ---
 
 function initApp() {
     // 1. Initialize Theme
     initTheme();
+    
+    // 2. Initialize Firebase (replacing Dropbox)
+    initFirebase();
+    
 
-    // 2. Render Initial State
+    // 3. Render Initial State
     renderKanbanBoard();
 
-    // 3. Attach Event Listeners
+    // 4. Attach Event Listeners
     addListBtn.addEventListener('click', addNewList);
     kanbanBoard.addEventListener('click', handleBoardClick);
     kanbanBoard.addEventListener('keypress', handleInputKeypress); 
     
     themeToggleBtn.addEventListener('click', toggleTheme);
-    dropboxSyncBtn.addEventListener('click', syncWithDropbox);
+    
+    // RENAME the event listener to reflect Firebase, but keep the button ID for simplicity
+    dropboxSyncBtn.addEventListener('click', syncWithFirebase); 
     driveSyncBtn.addEventListener('click', syncWithDrive);
     
     document.addEventListener('click', (e) => {
