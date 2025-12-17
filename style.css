@@ -1,0 +1,404 @@
+/* --- Global Reset & Base Styles --- */
+:root {
+    /* Light Theme Variables */
+    --background-color: #f7f9fc;
+    --text-color: #333;
+    --header-footer-bg: #fff;
+    --card-bg: #ffffff;
+    --border-color: #eee;
+    --primary-color: #007bff;
+    --accent-color: #28a745;
+    --hover-bg: #e9ecef;
+    --list-bg: #e2e8f0; /* Light grey background for the list column */
+    --urgent-color: #dc3545; /* Red for overdue tasks */
+    --due-color: #007bff; /* Blue for regular due dates */
+    --neutral-date-color: #6c757d; /* Neutral grey for no date/completed tasks */
+}
+
+[data-theme="dark"] {
+    /* Dark Theme Variables */
+    --background-color: #1a1a2e;
+    --text-color: #e4e6eb;
+    --header-footer-bg: #162447;
+    --card-bg: #203657;
+    --border-color: #3a4a6e;
+    --primary-color: #79d7f3;
+    --accent-color: #c9e472;
+    --hover-bg: #2c4164;
+    --list-bg: #2b395e; /* Darker background for the list column */
+    --urgent-color: #ff6b6b; /* Lighter red for dark mode */
+    --due-color: #79d7f3; /* Lighter blue for dark mode */
+    --neutral-date-color: #99a2b5; /* Lighter neutral grey for dark mode/completed tasks */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Header --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: var(--header-footer-bg);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.app-title {
+    font-size: 1.5em;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* --- Main Content (Kanban Setup) --- */
+#app-container {
+    flex-grow: 1;
+    overflow: hidden; 
+    display: flex; 
+    padding: 10px 0; 
+}
+
+#kanban-board {
+    display: flex;
+    overflow-x: auto; 
+    overflow-y: hidden;
+    padding: 10px;
+    gap: 15px;
+    flex-grow: 1;
+}
+
+/* --- List Column Styling --- */
+.list-column {
+    flex-shrink: 0; 
+    width: 280px; 
+    max-height: 100%; 
+    display: flex;
+    flex-direction: column;
+    background-color: var(--list-bg);
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 5px;
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.list-name-text {
+    flex-grow: 1;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.list-name-text:hover {
+    background-color: var(--hover-bg);
+}
+
+.list-actions-dropdown {
+    position: relative;
+}
+
+.list-actions-dropdown button {
+    background: none;
+    color: var(--text-color);
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    opacity: 0.7;
+}
+
+.list-actions-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 35px;
+    background-color: var(--card-bg);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    z-index: 30;
+    min-width: 150px;
+}
+
+.list-actions-content button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    background: none;
+    color: var(--text-color);
+    border-radius: 0;
+    font-size: 0.9em;
+    height: auto;
+}
+
+.list-actions-content button:hover {
+    background-color: var(--hover-bg);
+}
+
+.todo-list-inner {
+    flex-grow: 1;
+    overflow-y: auto; 
+    padding-top: 5px;
+}
+
+/* --- Inline Task Input (New Task) --- */
+.task-add-form {
+    display: flex;
+    gap: 5px;
+    padding: 5px 0 10px;
+    flex-wrap: wrap; 
+}
+
+.task-add-form input[type="text"] {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    font-size: 0.9em;
+}
+
+.task-add-form input[type="date"] {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    font-size: 0.9em;
+    min-width: 130px; 
+}
+
+.task-add-form button {
+    background-color: var(--accent-color);
+    padding: 8px;
+    width: 35px;
+    height: 35px;
+}
+
+
+/* --- Add List Button Column --- */
+.add-list-column {
+    flex-shrink: 0;
+    width: 280px;
+    padding: 10px;
+    max-height: 100%;
+}
+
+#add-list-btn {
+    width: 100%;
+    height: 50px;
+    background-color: var(--primary-color);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* --- To-Do List Items --- */
+.todo-item {
+    display: flex;
+    flex-direction: column; 
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 10px;
+    margin-bottom: 8px;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s;
+    font-size: 0.95em;
+}
+
+.todo-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.todo-item-text {
+    flex-grow: 1;
+    margin-right: 15px;
+    word-break: break-word;
+}
+
+.completed .todo-item-text {
+    text-decoration: line-through;
+    color: #999;
+}
+
+/* --- Due Date Styling --- */
+.task-metadata {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.due-date-display {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: var(--due-color);
+    background-color: rgba(0, 123, 255, 0.1);
+    cursor: pointer;
+}
+
+.due-date-display.overdue {
+    color: var(--urgent-color);
+    background-color: rgba(220, 53, 69, 0.1);
+    font-weight: bold;
+}
+
+/* Neutral style for tasks without a date */
+.due-date-display.no-date {
+    color: var(--neutral-date-color);
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    opacity: 0.8;
+}
+
+/* Neutral style for *Completed* tasks */
+.completed .due-date-display {
+    color: var(--neutral-date-color) !important; /* Use !important to override .overdue or default date color */
+    background-color: transparent !important;
+    border: 1px solid var(--border-color);
+    opacity: 0.8;
+}
+
+/* Keep icons neutral in the no-date state AND completed state */
+.due-date-display.no-date i,
+.completed .due-date-display i {
+    color: var(--neutral-date-color);
+}
+
+
+/* Hide the pencil icon on the date display by default, show on hover */
+.due-date-display i {
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.due-date-display:hover i {
+    opacity: 1;
+}
+
+/* --- Task Actions --- */
+.todo-item-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.todo-item-actions button {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    padding: 5px;
+    font-size: 1.1em;
+    opacity: 0.7;
+    width: auto;
+    height: auto;
+}
+
+.todo-item-actions button:hover {
+    opacity: 1;
+    color: var(--accent-color);
+}
+
+.todo-item-actions .delete-btn {
+    color: #dc3545; /* Red for delete */
+}
+
+/* Style for Task Edit Input */
+.edit-task-input {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--primary-color);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-size: 1em;
+}
+
+
+/* --- Buttons (Standard button styles) --- */
+button {
+    background-color: var(--primary-color);
+    color: var(--header-footer-bg);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+#theme-toggle {
+    padding: 10px;
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-color);
+}
+
+/* Ensure the task list uses available vertical space */
+#kanban-board .todo-list-inner {
+    min-height: 1px; 
+}
+
+
+/* --- Footer & Sync Buttons --- */
+.cloud-sync-footer {
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 15px;
+    background-color: var(--header-footer-bg);
+    border-top: 1px solid var(--border-color);
+    z-index: 20;
+}
+
+.cloud-sync-footer button {
+    padding: 8px 10px;
+    font-size: 0.9em;
+    background-color: #6c757d; /* Neutral grey for sync */
+}
+
+.cloud-sync-footer button i {
+    margin-right: 5px;
+}
