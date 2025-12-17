@@ -13,12 +13,11 @@ const themeToggleBtn = document.getElementById('theme-toggle');
 const dropboxSyncBtn = document.getElementById('dropbox-sync-btn');
 const driveSyncBtn = document.getElementById('drive-sync-btn');
 
-// NEW: Mobile Selector
-const listSelector = document.getElementById('list-select'); 
+// REMOVED: const listSelector = document.getElementById('list-select'); 
 
 
 // --- Firebase Configuration ---
-// <<< CRITICAL: REPLACE ALL OF THESE WITH YOUR ACTUAL CONFIG FROM FIREBASE CONSOLE >>>
+// The configuration is kept from the provided file.
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBkR3Y5b4YymPJdX48eggk9q6st06rh1t8",
   authDomain: "cozio-2607f.firebaseapp.com",
@@ -276,8 +275,7 @@ function renderKanbanBoard() {
     kanbanBoard.innerHTML = ''; 
     const listNames = Object.keys(todoLists);
 
-    // 1. Populate the mobile selector options
-    populateMobileListSelector(listNames);
+    // REMOVED: 1. Populate the mobile selector options
     
     // Ensure the current list exists
     if (!todoLists[currentListName]) {
@@ -290,12 +288,8 @@ function renderKanbanBoard() {
         column.className = 'list-column';
         column.dataset.listName = listName;
         
-        // Mobile-specific attribute for CSS hiding/showing
-        if (listName === currentListName) {
-            column.dataset.listNameActive = 'true';
-        } else {
-            column.dataset.listNameActive = 'false';
-        }
+        // REMOVED: Mobile-specific attribute for CSS hiding/showing
+        // if (listName === currentListName) { column.dataset.listNameActive = 'true'; } else { column.dataset.listNameActive = 'false'; }
 
 
         const header = document.createElement('div');
@@ -341,67 +335,12 @@ function renderKanbanBoard() {
     
     document.addEventListener('click', closeAllDropdowns);
     
-    // 3. Ensure visibility is correct after rendering
-    updateMobileListVisibility(currentListName);
+    // REMOVED: 3. Ensure visibility is correct after rendering
 }
 
-/**
- * Populates the <select> element with list names and sets the current value.
- */
-function populateMobileListSelector(listNames) {
-    if (!listSelector) return;
-
-    // Remove old listeners to prevent duplication on re-render
-    listSelector.removeEventListener('change', handleListSelectionChange);
-
-    listSelector.innerHTML = ''; // Clear previous options
-    
-    listNames.forEach(listName => {
-        const option = document.createElement('option');
-        option.value = listName;
-        option.textContent = listName;
-        listSelector.appendChild(option);
-    });
-
-    listSelector.value = currentListName;
-    // Add the listener back
-    listSelector.addEventListener('change', handleListSelectionChange);
-}
-
-/**
- * Handles selection change in the mobile list selector.
- */
-function handleListSelectionChange(event) {
-    const selectedList = event.target.value;
-    if (selectedList && selectedList !== currentListName) {
-        currentListName = selectedList;
-        saveState(); // Update local storage and sync to Firebase
-        updateMobileListVisibility(currentListName);
-    }
-}
-
-/**
- * Manages which list column is visible on mobile devices using CSS attributes.
- */
-function updateMobileListVisibility(listName) {
-    // Check screen size to see if mobile display rules should apply
-    const isMobileView = window.innerWidth <= 768; 
-
-    const allColumns = document.querySelectorAll('.list-column');
-
-    allColumns.forEach(column => {
-        const isActive = column.dataset.listName === listName;
-        
-        // Toggle the CSS selector attribute
-        // CSS will use this attribute to show/hide the columns
-        column.dataset.listNameActive = isActive ? 'true' : 'false';
-    });
-    
-    // Also ensure the selector is updated (important for consistency)
-    if (listSelector) {
-        listSelector.value = listName;
-    }
-}
+// REMOVED: populateMobileListSelector
+// REMOVED: handleListSelectionChange
+// REMOVED: updateMobileListVisibility
 
 
 /**

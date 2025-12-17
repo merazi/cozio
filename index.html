@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple To-Do Kanban</title>
+    <title>Cozio</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <link rel="manifest" href="/manifest.json"> 
+    <link rel="manifest" href="manifest.json"> 
     
     <meta name="theme-color" content="#34495e">
     
-    <link rel="icon" type="image/png" href="/icon.png"> 
+    <link rel="icon" type="image/png" href="icon.png"> 
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -22,27 +22,21 @@
 
     <header>
         <h1 class="app-title">
-            <img src="/icon.png" alt="App Icon" class="header-icon">
-            Cozio Tasks
+            <img src="icon.png" alt="App Icon" class="header-icon">
+            Cozio 🚀
         </h1>
         <div class="header-actions">
+            <button id="add-list-btn" title="Create New List"><i class="fas fa-plus"></i> Add New List</button>
             <button id="theme-toggle" title="Toggle Dark/Light Mode"><i class="fas fa-sun"></i></button>
         </div>
         
-        <div id="mobile-list-selector-container">
-            <label for="list-select" class="sr-only">Select List</label>
-            <select id="list-select"></select>
-        </div>
-    </header>
+        </header>
 
     <main id="app-container">
         <div id="kanban-board">
-            </div>
-
-        <div class="add-list-column">
-            <button id="add-list-btn" title="Create New List"><i class="fas fa-plus"></i> Add New List</button>
         </div>
-    </main>
+
+        </main>
     
     <footer class="cloud-sync-footer">
         <button id="dropbox-sync-btn" title="Sync with Firebase"><i class="fab fa-google"></i> Sync (Firebase Connected)</button>

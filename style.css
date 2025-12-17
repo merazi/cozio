@@ -76,7 +76,6 @@ header {
     border-bottom: 1px solid var(--border-color);
     padding: 10px 20px;
     display: flex;
-    flex-wrap: wrap; 
     justify-content: space-between;
     align-items: center;
     gap: 10px;
@@ -97,6 +96,12 @@ header {
     vertical-align: middle;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between buttons */
+}
+
 .header-actions button {
     background: none;
     border: none;
@@ -111,14 +116,35 @@ header {
     color: var(--primary-color);
 }
 
-/* List Selector Styling (Mobile only, hidden by default) */
-#mobile-list-selector-container {
-    display: none; /* Hidden on desktop */
+/* New List Button in Header (Desktop Style) */
+#add-list-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    box-shadow: var(--box-shadow);
 }
 
-#list-select {
-    /* Styles applied in media query */
+#add-list-btn:hover {
+    background-color: var(--primary-hover);
+    color: white; /* Ensure text remains white */
 }
+#add-list-btn i {
+    font-size: 1em; /* Reset font-size for icon within button */
+    color: white;
+}
+
+
+/* Mobile Selector container is removed/hidden */
+#mobile-list-selector-container {
+    display: none; 
+}
+
 
 /* =======================================
    4. KANBAN BOARD LAYOUT
@@ -162,7 +188,7 @@ main {
     font-weight: 600;
 }
 
-/* List Actions Dropdown */
+/* List Actions Dropdown (No change) */
 .list-actions-dropdown {
     position: relative;
     display: inline-block;
@@ -209,43 +235,43 @@ main {
     color: var(--danger-color);
 }
 
-/* Add New List Button Column */
-.add-list-column {
-    min-width: 250px;
-    flex-shrink: 0;
-}
+/* Add New List Button Column REMOVED as button is in header */
+/* .add-list-column { ... } */
 
-#add-list-btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 600;
-    width: 100%;
-    transition: background-color 0.2s;
-    box-shadow: var(--box-shadow);
-}
-
-#add-list-btn:hover {
-    background-color: var(--primary-hover);
-}
 
 /* =======================================
-   5. TASK CARDS & INPUT
+   5. TASK CARDS & INPUT (No change)
    ======================================= */
 .task-add-form {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    gap: 5px;
+    align-items: stretch;
     margin-bottom: 20px;
     padding: 5px 0;
 }
 
+.task-input-field {
+    flex-grow: 1;
+}
+.due-date-input {
+    flex-grow: 0;
+    width: 110px;
+}
+.task-add-btn {
+    flex-shrink: 0;
+    width: 40px;
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    padding: 10px 0;
+    transition: opacity 0.2s;
+}
+
 .task-input-field, .due-date-input {
-    width: calc(100% - 40px); /* Leave space for the add button */
     padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -260,46 +286,16 @@ main {
     outline: none;
 }
 
-.task-add-btn {
-    width: 40px;
-    background-color: var(--success-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    padding: 10px 0;
-    transition: opacity 0.2s;
-}
-
 .task-add-btn:hover {
     opacity: 0.9;
 }
 
-/* Combined Input Layout for Desktop */
-.task-add-form {
-    display: flex;
-    flex-direction: row;
-    gap: 5px;
-    align-items: stretch;
-}
-.task-input-field {
-    flex-grow: 1;
-}
-.due-date-input {
-    flex-grow: 0;
-    width: 110px;
-}
-.task-add-btn {
-    flex-shrink: 0;
-    width: 40px;
-}
 
-/* Task Item Styling */
+/* Task Item Styling (No change) */
 .todo-list-inner {
-    overflow-y: auto; /* Scrollable area for tasks */
+    overflow-y: auto; 
     flex-grow: 1;
-    padding-right: 5px; /* Space for scrollbar */
+    padding-right: 5px; 
 }
 
 .todo-item {
@@ -351,7 +347,7 @@ main {
     color: var(--primary-color);
 }
 
-/* Task Metadata (Due Date) */
+/* Task Metadata (Due Date) (No change) */
 .task-metadata {
     font-size: 0.8em;
     color: var(--secondary-text-color);
@@ -383,7 +379,7 @@ main {
 }
 
 
-/* Completed Task Styles */
+/* Completed Task Styles (No change) */
 .todo-item.completed {
     background-color: var(--secondary-bg);
     border-left: 5px solid var(--success-color);
@@ -405,7 +401,7 @@ main {
 
 
 /* =======================================
-   6. FOOTER & SYNC
+   6. FOOTER & SYNC (No change)
    ======================================= */
 .cloud-sync-footer {
     padding: 10px 20px;
@@ -436,100 +432,101 @@ main {
    ======================================= */
 @media (max-width: 768px) {
 
-    /* HEADER FIXES: Stack and align items for a single column look */
+    /* HEADER FIXES: Stack and align items for a single row with flex-start */
     header {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        flex-wrap: wrap; /* Allow wrapping if needed */
+        justify-content: space-between;
     }
     
     .app-title {
-        font-size: 1.5em; /* Slightly smaller title */
+        font-size: 1.5em; 
+        flex-grow: 1; /* Allows title to take up space */
     }
 
     .header-actions {
-        order: -1; /* Move theme toggle to the top right */
-        align-self: flex-end;
-        margin-bottom: 5px;
+        order: 1; 
+        gap: 5px;
+    }
+    
+    /* New List Button on Mobile: Make it a standard button size in the header actions */
+    #add-list-btn {
+        padding: 8px 12px;
+        font-size: 0.9em;
     }
 
-    /* MOBILE LIST SELECTOR (Visible on mobile) */
+    /* Mobile List Selector REMOVED */
     #mobile-list-selector-container {
-        display: block; /* Show the selector */
-        margin-bottom: 15px;
-        width: 100%;
-        box-sizing: border-box;
+        display: none; 
     }
 
-    #list-select {
-        width: 100%;
-        padding: 10px;
-        font-size: 1.1em;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        background-color: var(--secondary-bg);
-        color: var(--text-color);
-        appearance: none; /* Remove default styling */
-        background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237f8c8d%22%20d%3D%22M287%20197.35l-14.7%2014.7-133.3%20-133.3-133.3%20133.3-14.7-14.7L143.5%2063.15z%22%2F%3E%3C%2Fsvg%3E'); /* Custom dropdown arrow */
-        background-repeat: no-repeat;
-        background-position: right 10px top 50%;
-        background-size: 12px auto;
-    }
-
-    /* KANBAN BOARD & LIST FIXES: Single column view */
+    /* KANBAN BOARD & LIST FIXES: Revert to Horizontal Scroll */
     #kanban-board {
-        display: block; /* Force vertical stacking */
+        display: flex; /* Keep horizontal flex layout */
         padding: 10px;
-        overflow-x: hidden;
+        overflow-x: auto; /* Re-enable horizontal scrolling */
+        gap: 10px; /* Tighter gap on mobile */
     }
 
     .list-column {
-        width: 100%;
-        max-width: 100%;
-        min-width: unset; 
+        width: 85vw; /* Make columns take up most of the viewport width */
+        min-width: 85vw; /* Critical: Ensure horizontal scroll is possible */
+        max-width: 85vw;
+        padding: 10px;
         margin: 0; 
-        padding-bottom: 20px; 
-        box-sizing: border-box;
-        border: 1px solid var(--border-color); /* Add border clarity */
+        /* REMOVING the list-name-active attribute logic */
+        /* .list-column[data-list-name-active="false"] { display: none; } */
+        /* .list-column[data-list-name-active="true"] { display: flex; } */
     }
 
-    /* HIDE LISTS: Only show the one marked as active */
-    .list-column[data-list-name-active="false"] {
-        display: none;
-    }
-    
-    .list-column[data-list-name-active="true"] {
-        display: flex;
-    }
-
-    /* The 'Add New List' button column should always be visible (at the bottom) */
-    .add-list-column {
-        display: block; 
-        width: 100%;
-        padding: 0 10px 20px 10px;
-        box-sizing: border-box;
-    }
-    
-    /* Task Input Form: Stack input fields vertically */
+    /* Task Input Form: Keep horizontal layout if possible, adjust if too narrow */
     .task-add-form {
-        flex-direction: column;
-        gap: 10px;
+        flex-direction: column; /* Stack input fields for better touch target */
+        gap: 8px;
     }
-    .task-input-field, .due-date-input, .task-add-btn {
+    .task-input-field, .due-date-input {
+        width: 100%; 
+    }
+    
+    /* The button will still be next to the field, but we need to adjust */
+    .task-add-btn {
+        width: 100%; /* Make the add button full width */
+        padding: 10px;
+    }
+    
+    /* Resetting the combined layout for mobile */
+    .task-add-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-gap: 5px;
+    }
+    .task-input-field {
+        grid-column: 1 / 3; /* Full width row 1 */
+    }
+    .due-date-input {
+        grid-column: 1 / 2; /* Half width row 2 */
+        width: 100%; /* Override local style */
+    }
+    .task-add-btn {
+        grid-column: 2 / 3; /* Half width row 2 */
         width: 100%;
-        padding: 12px; /* Bigger touch targets */
+        padding: 8px;
     }
+
 
     /* Actions: Move task actions to the right of the text */
     .todo-item-top {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
         gap: 5px;
     }
     .todo-item-text {
-        width: 100%;
+        width: auto;
+        flex-grow: 1;
     }
     .todo-item-actions {
-        align-self: flex-end;
+        align-self: center;
+        flex-shrink: 0;
     }
 
     /* Footer: Stack sync buttons */
