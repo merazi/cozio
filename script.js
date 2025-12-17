@@ -4,6 +4,7 @@
  * todoLists structure: { "List Name": [task, ...] }
  */
 let todoLists = JSON.parse(localStorage.getItem('todoLists')) || { 'Main': [] };
+// currentListName is only used when manipulating lists, not for view control anymore.
 let currentListName = localStorage.getItem('currentListName') || 'Main';
 
 // --- DOM Elements ---
@@ -11,14 +12,20 @@ const kanbanBoard = document.getElementById('kanban-board');
 const addListBtn = document.getElementById('add-list-btn');
 const themeToggleBtn = document.getElementById('theme-toggle');
 const dropboxSyncBtn = document.getElementById('dropbox-sync-btn');
-const driveSyncBtn = document.getElementById('drive-sync-btn');
+const driveSyncBtn = document.getElementById('drive-sync-btn'); // Repurposed for Sign Out
+// REMOVED: const listSelector = document.getElementById('list-select'); 
 
-// NEW Auth DOM Elements
-const authActionBtn = document.getElementById('auth-action-btn');
-const authOverlay = document.getElementById('auth-overlay');
-const emailForm = document.getElementById('email-form');
+// NEW: Login/Auth Elements
+const appWrapper = document.getElementById('app-wrapper'); 
+const loginScreen = document.getElementById('login-screen');
 const emailInput = document.getElementById('email-input');
-const authMessage = document.getElementById('auth-message');
+const sendLinkBtn = document.getElementById('send-link-btn');
+const emailSentMessage = document.getElementById('email-sent-message');
+const emailConfirmSection = document.getElementById('email-confirm-section');
+const confirmEmailInput = document.getElementById('confirm-email-input');
+const finishLoginBtn = document.getElementById('finish-login-btn');
+const authErrorMessage = document.getElementById('auth-error-message');
+const syncStatus = document.getElementById('sync-status');
 
 
 // --- Firebase Configuration ---
@@ -34,8 +41,16 @@ const FIREBASE_CONFIG = {
   measurementId: "G-YKN7LSDDLN"
 };
 
+// Action code settings for the email link
+// This URL must match your authorized domain in Firebase Console.
+const ACTION_CODE_SETTINGS = {
+  url: window.location.href, // Use the current page URL as the destination after verification
+  handleCodeInApp: true,
+};
+
 let firebaseApp = null;
 let database = null;
+let auth = null; 
 let currentUser = null; 
 
 // --- Utility Functions ---
@@ -277,32 +292,6 @@ function renderListTasks(listName, container) {
  * Renders the entire Kanban board with all lists.
  */
 function renderKanbanBoard() {
-    
-    // --- AUTHENTICATION UI CONTROL ---
-    if (currentUser) {
-        kanbanBoard.style.display = 'flex';
-        authOverlay.style.display = 'none';
-        addListBtn.style.display = 'inline-block';
-        // Update header button to "Sign Out"
-        authActionBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> Sign Out`;
-        authActionBtn.onclick = handleSignOut;
-    } else {
-        kanbanBoard.style.display = 'none';
-        authOverlay.style.display = 'flex';
-        addListBtn.style.display = 'none';
-        // Update header button to "Sign In"
-        authActionBtn.innerHTML = `<i class="fas fa-user-circle"></i> Sign In`;
-        authActionBtn.onclick = null; // User must use the overlay form to sign in
-    }
-    
-    if (!currentUser) {
-        // Reset the message if the user is seeing the login form
-        showMessage('Enter your email to sign in or register.', 'info');
-        return; 
-    } 
-    // ---------------------------------
-
-
     kanbanBoard.innerHTML = ''; 
     const listNames = Object.keys(todoLists);
 
@@ -360,6 +349,7 @@ function renderKanbanBoard() {
     
     document.addEventListener('click', closeAllDropdowns);
 }
+
 
 /**
  * Adds a new task to the specified list.
@@ -591,6 +581,15 @@ function initTheme() {
     icon.classList.add(initialTheme === 'light' ? 'fa-sun' : 'fa-moon');
 }
 
+/**
+ * Updates the footer status text.
+ */
+function updateFooterStatus(message) {
+    if (syncStatus) {
+        syncStatus.textContent = message;
+    }
+}
+
 
 // --- Firebase Synchronization Logic ---
 
@@ -598,243 +597,258 @@ function initTheme() {
  * Writes the local todoLists state to the Firebase Realtime Database.
  */
 function syncStateToFirebase() {
-    if (currentUser && database) {
-        // Data path now uses user's UID obtained from email login
-        const dataRef = database.ref('users/' + currentUser.uid + '/data');
-        dataRef.set(todoLists)
-            .then(() => {
-                console.log("Firebase sync successful.");
-            })
-            .catch(error => {
-                console.error("Firebase sync error:", error);
-            });
+    // Guard: Only sync if authenticated
+    if (!currentUser || !database) {
+        updateFooterStatus('Status: Not logged in. Cannot sync.');
+        return;
     }
+    
+    // The data path is /users/{uid}/data
+    const dataRef = database.ref('users/' + currentUser.uid + '/data');
+    dataRef.set(todoLists)
+        .then(() => {
+            console.log("Firebase sync successful.");
+            updateFooterStatus('Status: Synced with cloud.');
+        })
+        .catch(error => {
+            console.error("Firebase sync error:", error);
+            updateFooterStatus('Status: Sync Error.');
+        });
 }
 
 /**
  * Sets up a listener for real-time changes from Firebase.
  */
 function listenForFirebaseChanges() {
-    if (currentUser && database) {
-        const dataRef = database.ref('users/' + currentUser.uid + '/data');
-        
-        dataRef.on('value', (snapshot) => {
-            const remoteData = snapshot.val();
-            if (remoteData) {
-                const localDataString = JSON.stringify(todoLists);
-                const remoteDataString = JSON.stringify(remoteData);
-
-                if (localDataString !== remoteDataString) {
-                    console.log("Remote changes detected. Updating local state.");
-                    todoLists = remoteData;
-                    localStorage.setItem('todoLists', remoteDataString);
-                    renderKanbanBoard();
-                }
-            } else {
-                // If remote data is empty (new user/first sync), push the local state up.
-                syncStateToFirebase();
-            }
-        }, (error) => {
-            console.error("Firebase listener error:", error);
-        });
-        
-        // Update the Sync button status
-        dropboxSyncBtn.innerHTML = `<i class="fab fa-google"></i> Synced with ${currentUser.email}`;
-    }
-}
-
-// --- NEW AUTH FUNCTIONS (Email Link Authentication) ---
-
-// The URL for the email link to redirect to. This must match the authorized domain in Firebase Console.
-const ACTION_CODE_SETTINGS = {
-  url: window.location.href.split('?')[0], // Use the base URL without query parameters
-  handleCodeInApp: true,
-};
-
-/**
- * Sends the sign-in link to the provided email address.
- */
-function handleSendSignInLink(event) {
-    event.preventDefault();
-    const email = emailInput.value;
-    if (!email) {
-        showMessage('Please enter a valid email address.', 'error');
+    // Guard: Only listen if authenticated
+    if (!currentUser || !database) {
         return;
     }
     
-    const auth = firebase.auth();
-    const btn = document.getElementById('send-link-btn');
-    btn.disabled = true;
+    const dataRef = database.ref('users/' + currentUser.uid + '/data');
+    
+    // This 'value' listener triggers anytime data at the path changes.
+    dataRef.on('value', (snapshot) => {
+        const remoteData = snapshot.val();
+        if (remoteData) {
+            // Check if the remote data is newer/different
+            const localDataString = JSON.stringify(todoLists);
+            const remoteDataString = JSON.stringify(remoteData);
+
+            if (localDataString !== remoteDataString) {
+                console.log("Remote changes detected. Updating local state.");
+                todoLists = remoteData;
+                localStorage.setItem('todoLists', remoteDataString);
+                renderKanbanBoard();
+                updateFooterStatus('Status: Synced with cloud.');
+            }
+        } else {
+            // If remote data is empty (first login), push the local state up.
+            syncStateToFirebase();
+        }
+    }, (error) => {
+        console.error("Firebase listener error:", error);
+        updateFooterStatus('Status: Sync Error.');
+    });
+    
+    // Update the Sync button to indicate Firebase connection
+    dropboxSyncBtn.innerHTML = '<i class="fas fa-sync"></i> Sync'; // Simplified text/icon
+    updateFooterStatus('Status: Synced with cloud.');
+}
+
+
+// --- Authentication Functions (Email Link Auth) ---
+
+/**
+ * Sends the magic link to the provided email address.
+ */
+function sendLoginLink() {
+    const email = emailInput.value.trim();
+    if (!email) {
+        authErrorMessage.textContent = 'Please enter a valid email address.';
+        return;
+    }
+    
+    authErrorMessage.textContent = 'Sending link...';
+    sendLinkBtn.disabled = true;
 
     auth.sendSignInLinkToEmail(email, ACTION_CODE_SETTINGS)
         .then(() => {
-            // Save the email locally to complete the sign-in process later
-            localStorage.setItem('emailForSignIn', email);
-            showMessage(`Sign-in link sent to ${email}. Please check your email to continue.`, 'success');
-            btn.disabled = false;
+            // The link was successfully sent. Inform the user.
+            window.localStorage.setItem('emailForSignIn', email);
+            emailInput.style.display = 'none';
+            sendLinkBtn.style.display = 'none';
+            emailSentMessage.style.display = 'block';
+            authErrorMessage.textContent = ''; // Clear status
         })
         .catch((error) => {
             console.error("Error sending sign-in link:", error);
-            showMessage(`Error: ${error.message}`, 'error');
-            btn.disabled = false;
+            authErrorMessage.textContent = `Error: ${error.message}. Please check your email and try again.`;
+            sendLinkBtn.disabled = false;
         });
 }
 
 /**
- * Completes the sign-in process when the user returns from the email link.
+ * Handles sign-in when the user returns from clicking the email link.
  */
-function handleSignInWithEmailLink() {
-    const auth = firebase.auth();
-    
-    if (auth.isSignInWithEmailLink(window.location.href)) {
-        let email = localStorage.getItem('emailForSignIn');
+function handleEmailLinkSignIn() {
+    // Check if the current URL is a sign-in link
+    if (auth && auth.isSignInWithEmailLink(window.location.href)) {
+        loginScreen.style.display = 'flex'; // Show the login box while processing
+
+        let email = window.localStorage.getItem('emailForSignIn');
         if (!email) {
-            // If email is not in local storage, prompt the user for it
-            email = prompt('Please re-enter your email for confirmation to complete sign-in:');
-        }
+            // The user may have opened the link on a different browser/device.
+            // Prompt them to confirm the email.
+            document.getElementById('login-title').textContent = 'Finalize Sign In';
+            document.getElementById('login-instructions').textContent = 'Please confirm the email address used to receive the link.';
 
-        if (email) {
-            showMessage('Signing in...', 'info');
+            emailInput.style.display = 'none';
+            sendLinkBtn.style.display = 'none';
+            emailSentMessage.style.display = 'none';
+            emailConfirmSection.style.display = 'flex'; 
             
-            auth.signInWithEmailLink(email, window.location.href)
-                .then((result) => {
-                    localStorage.removeItem('emailForSignIn');
-                    // The onAuthStateChanged listener handles the successful login
-                    // Clean up the URL:
-                    window.history.replaceState(null, null, window.location.href.split('?')[0]); 
-                })
-                .catch((error) => {
-                    console.error("Error signing in with email link:", error);
-                    showMessage('Could not complete sign-in. Link may be expired or invalid. Please try again.', 'error');
-                    // Force redirect to clean URL in case of error
-                    window.history.replaceState(null, null, window.location.href.split('?')[0]);
-                });
-        } else {
-             // Clean up the URL if they cancelled the prompt
-             window.history.replaceState(null, null, window.location.href.split('?')[0]);
+            // Attach listener for finishing the sign-in
+            finishLoginBtn.addEventListener('click', () => {
+                const confirmedEmail = confirmEmailInput.value.trim();
+                if (confirmedEmail) {
+                    processSignIn(confirmedEmail);
+                } else {
+                    authErrorMessage.textContent = 'Please enter your email to finalize login.';
+                }
+            }, { once: true }); 
+            
+            return; // Wait for user input
         }
+
+        // We have the email, proceed with sign-in
+        processSignIn(email);
     }
 }
 
 /**
- * Signs the current user out.
+ * Finalizes the sign-in using the email and the link data.
  */
-function handleSignOut() {
-    if (confirm('Are you sure you want to sign out? Your data will remain synced to your account.')) {
-        firebase.auth().signOut()
-            .then(() => {
-                // onAuthStateChanged handles UI refresh
-                // Optional: Clear local storage completely if preferred: localStorage.clear(); 
-            })
-            .catch((error) => {
-                console.error("Sign out error:", error);
-            });
-    }
-}
-
-/**
- * Displays a temporary message in the auth box.
- */
-function showMessage(text, type) {
-    authMessage.textContent = text;
-    authMessage.classList.remove('hidden-message');
+function processSignIn(email) {
+    authErrorMessage.textContent = 'Verifying link... Please wait.';
+    finishLoginBtn.disabled = true;
+    sendLinkBtn.disabled = true;
     
-    // Set text and border colors based on type
-    if (type === 'error') {
-        authMessage.style.color = 'var(--danger-color)';
-        authMessage.style.borderColor = 'var(--danger-color)';
-    } else if (type === 'success') {
-        authMessage.style.color = 'var(--success-color)';
-        authMessage.style.borderColor = 'var(--success-color)';
+    auth.signInWithEmailLink(email, window.location.href)
+        .then(() => {
+            // Success! The user is now signed in.
+            window.localStorage.removeItem('emailForSignIn');
+            // Remove the link parameters from the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // The onAuthStateChanged observer will handle the UI update
+            resetLoginUI();
+        })
+        .catch((error) => {
+            console.error("Error signing in with email link:", error);
+            authErrorMessage.textContent = `Login failed: ${error.message}. Please try sending a new link.`;
+            // Reset UI to initial state
+            resetLoginUI();
+        });
+}
+
+/**
+ * Resets the login form UI to the initial 'Send Link' state.
+ */
+function resetLoginUI() {
+    // Make sure all elements are in their default, pre-login state
+    emailInput.style.display = 'block';
+    sendLinkBtn.style.display = 'block';
+    sendLinkBtn.disabled = false;
+    emailSentMessage.style.display = 'none';
+    emailConfirmSection.style.display = 'none';
+    document.getElementById('login-title').textContent = 'Sign In to Cozio';
+    document.getElementById('login-instructions').textContent = 'Enter your email address to receive a secure login link.';
+    authErrorMessage.textContent = '';
+    emailInput.value = '';
+    confirmEmailInput.value = '';
+}
+
+/**
+ * The primary synchronization function (now maps to Firebase init/check).
+ */
+function syncWithFirebase() {
+    // If the user clicks sync, we simply ensure the local data is pushed up immediately.
+    syncStateToFirebase();
+}
+
+/**
+ * Repurposed for Sign Out.
+ */
+function syncWithDrive() {
+    if (currentUser) {
+        if (confirm('Are you sure you want to sign out?')) {
+            firebase.auth().signOut().then(() => {
+                // Sign-out successful. onAuthStateChanged handles UI.
+                alert('Signed out successfully.');
+            }).catch((error) => {
+                console.error("Sign out error:", error);
+                alert('An error occurred during sign out.');
+            });
+        }
     } else {
-        authMessage.style.color = 'var(--text-color)';
-        authMessage.style.borderColor = 'var(--border-color)';
+        alert('You are currently signed out.');
     }
-    authMessage.style.display = 'block';
 }
 
 
+// --- Firebase Initialization ---
+
 /**
- * Initializes Firebase and sets up the authentication state listener.
+ * Initializes Firebase and sets up the authentication state observer.
  */
 function initFirebase() {
     if (typeof firebase === 'undefined') {
         console.error('Firebase SDK not loaded.');
-        dropboxSyncBtn.innerHTML = '<i class="fab fa-google"></i> Firebase Error';
+        updateFooterStatus('Status: Firebase SDK Missing.');
         return;
     }
     
-    // Initialize the app only once
     if (!firebaseApp) {
         firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
         database = firebase.database();
+        auth = firebase.auth();
     }
     
-    // Check if we are returning from an email link redirect
-    handleSignInWithEmailLink();
+    // Check if the user is returning from the login link
+    handleEmailLinkSignIn();
 
-    const auth = firebase.auth();
-
-    // Listener for auth state changes
+    // Auth State Observer: Controls app visibility and listens for data
     auth.onAuthStateChanged((user) => {
-        // Stop listening to the previous user's data
-        if (currentUser && database) {
-             database.ref('users/' + currentUser.uid + '/data').off();
-        }
-
         if (user) {
             // User is signed in.
             currentUser = user;
-            console.log("Authenticated as:", user.email || user.uid);
+            console.log("User signed in:", currentUser.uid);
             
-            // Check if local data is empty, if so, load remote data (to prevent overwriting)
-            const isLocalStateEmpty = Object.keys(todoLists).length === 0 || 
-                                      (Object.keys(todoLists).length === 1 && todoLists[Object.keys(todoLists)[0]].length === 0);
+            // SHOW APP, HIDE LOGIN
+            appWrapper.style.display = 'flex'; // Show the main application wrapper
+            loginScreen.style.display = 'none'; // Hide the login screen
             
-            if (isLocalStateEmpty) {
-                // If local state is essentially empty, ensure we use the remote data.
-                todoLists = {}; // Will be populated by listenForFirebaseChanges
-            }
-            
+            // Start listening for user-specific data
             listenForFirebaseChanges();
-            renderKanbanBoard(); // Rerender UI to show board
+            
+            updateFooterStatus(`Logged in: ${user.email || 'via Email Link'}`);
             
         } else {
             // User is signed out.
             currentUser = null;
-            console.log("User signed out.");
-            
-            // Revert state to local default for signed-out experience
-            todoLists = JSON.parse(localStorage.getItem('todoLists')) || { 'Main': [] };
-            currentListName = localStorage.getItem('currentListName') || 'Main';
-            
-            renderKanbanBoard(); // Rerender UI to show sign-in screen
-            // Update the Sync button status
-            dropboxSyncBtn.innerHTML = '<i class="fab fa-google"></i> Sign In to Sync';
+            console.log("User is signed out. Showing login screen.");
+
+            // HIDE APP, SHOW LOGIN
+            appWrapper.style.display = 'none'; // Hide the main application board
+            // Only show login screen if we are not actively handling a redirect
+            if (!auth.isSignInWithEmailLink(window.location.href)) {
+                 loginScreen.style.display = 'flex'; 
+            }
+           
+            updateFooterStatus('Signed out. Please log in.');
         }
     });
 }
-
-/**
- * The primary synchronization function.
- */
-function syncWithFirebase() {
-    if (currentUser) {
-        // If the user clicks sync, we simply ensure the local data is pushed up immediately.
-        syncStateToFirebase();
-        alert('Synchronization initiated with Firebase. Real-time updates are active.');
-    } else {
-        alert('Please sign in first to enable cloud synchronization.');
-    }
-}
-
-/**
- * Placeholder for Google Drive Sync Logic.
- */
-function syncWithDrive() {
-    alert('Firebase is active and managing sync.');
-}
-
 
 // --- Initialization and Event Listeners ---
 
@@ -842,23 +856,26 @@ function initApp() {
     // 1. Initialize Theme
     initTheme();
     
-    // 2. Initialize Firebase (This handles all auth and initial rendering)
+    // 2. Initialize Firebase (Sets up auth listener which controls app access)
     initFirebase();
     
-    // 3. Attach Event Listeners
+    // 3. Render Initial State (The auth listener will control when it's displayed)
+    renderKanbanBoard(); 
+
+    // 4. Attach Event Listeners
     addListBtn.addEventListener('click', addNewList);
     kanbanBoard.addEventListener('click', handleBoardClick);
     kanbanBoard.addEventListener('keypress', handleInputKeypress); 
     
     themeToggleBtn.addEventListener('click', toggleTheme);
     
-    // Auth specific listener
-    emailForm.addEventListener('submit', handleSendSignInLink);
+    // Attach Auth Event Listeners
+    sendLinkBtn.addEventListener('click', sendLoginLink);
     
-    // Sync buttons
+    // Repurposed Sync Buttons
     dropboxSyncBtn.addEventListener('click', syncWithFirebase); 
-    driveSyncBtn.addEventListener('click', syncWithDrive);
-    
+    driveSyncBtn.addEventListener('click', syncWithDrive); // Repurposed for Sign Out
+
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.list-actions-dropdown')) {
             document.querySelectorAll('.list-actions-content').forEach(content => {
@@ -867,7 +884,7 @@ function initApp() {
         }
     });
 
-    // Handle resize events to properly switch between mobile/desktop views
+    // Handle resize events (no more mobile view logic inside, just re-render)
     window.addEventListener('resize', () => renderKanbanBoard());
 }
 

@@ -76,6 +76,7 @@ header {
     border-bottom: 1px solid var(--border-color);
     padding: 10px 20px;
     display: flex;
+    flex-wrap: wrap; 
     justify-content: space-between;
     align-items: center;
     gap: 10px;
@@ -98,12 +99,33 @@ header {
 
 .header-actions {
     display: flex;
-    align-items: center;
-    gap: 10px; /* Space between buttons */
+    gap: 10px;
+    align-items: center; /* Ensures vertical alignment of buttons */
 }
 
-/* Theme Toggle Button (Default Style) */
-.header-actions button {
+/* Styles for Add New List button in the header */
+#add-list-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 15px; 
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    box-shadow: none; 
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#add-list-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Style for the theme toggle button */
+.header-actions button:not(#add-list-btn) { 
     background: none;
     border: none;
     cursor: pointer;
@@ -113,72 +135,30 @@ header {
     transition: color 0.2s;
 }
 
-.header-actions button:hover {
+.header-actions button:not(#add-list-btn):hover {
     color: var(--primary-color);
 }
-
-/* New List Button in Header (Desktop Style) */
-#add-list-btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 600;
-    transition: background-color 0.2s;
-    box-shadow: var(--box-shadow);
-}
-
-#add-list-btn:hover {
-    background-color: var(--primary-hover);
-    color: white; /* Ensure text remains white */
-}
-#add-list-btn i {
-    font-size: 1em; /* Reset font-size for icon within button */
-    color: white;
-}
-
-/* Auth Action Button (Sign In/Out) */
-.auth-btn {
-    background: none;
-    border: 1px solid var(--border-color);
-    cursor: pointer;
-    font-size: 1em; 
-    font-weight: 600;
-    color: var(--primary-color);
-    padding: 8px 10px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-}
-.auth-btn:hover {
-    background-color: var(--secondary-bg);
-    color: var(--primary-color);
-}
-.auth-btn i {
-    margin-right: 5px;
-    font-size: 1em;
-}
-
-/* Mobile Selector container is removed/hidden */
-#mobile-list-selector-container {
-    display: none; 
-}
-
 
 /* =======================================
    4. KANBAN BOARD LAYOUT
    ======================================= */
-main {
+#app-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#app-container {
     flex-grow: 1;
     overflow: hidden;
-    position: relative; /* For the overlay */
+    display: flex;
+    flex-direction: column; 
 }
 
 #kanban-board {
     display: flex;
-    overflow-x: auto; /* Enables horizontal scrolling for columns */
+    overflow-x: auto; /* Enables horizontal scrolling for columns on all screen sizes */
     height: 100%;
     gap: 20px;
     padding: 20px;
@@ -192,7 +172,7 @@ main {
     padding: 15px;
     min-width: 300px;
     max-width: 400px;
-    flex-shrink: 0; /* Prevents columns from shrinking below min-width */
+    flex-shrink: 0; 
     height: auto;
     display: flex;
     flex-direction: column;
@@ -261,7 +241,6 @@ main {
 /* =======================================
    5. TASK CARDS & INPUT
    ======================================= */
-/* Combined Input Layout for Desktop */
 .task-add-form {
     display: flex;
     flex-direction: row;
@@ -270,6 +249,22 @@ main {
     margin-bottom: 20px;
     padding: 5px 0;
 }
+
+.task-input-field, .due-date-input {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9em;
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    transition: border-color 0.2s;
+}
+
+.task-input-field:focus, .due-date-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
 .task-input-field {
     flex-grow: 1;
 }
@@ -290,31 +285,15 @@ main {
     transition: opacity 0.2s;
 }
 
-.task-input-field, .due-date-input {
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 0.9em;
-    background-color: var(--surface-color);
-    color: var(--text-color);
-    transition: border-color 0.2s;
-}
-
-.task-input-field:focus, .due-date-input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-}
-
 .task-add-btn:hover {
     opacity: 0.9;
 }
 
-
 /* Task Item Styling */
 .todo-list-inner {
-    overflow-y: auto; /* Scrollable area for tasks */
+    overflow-y: auto; 
     flex-grow: 1;
-    padding-right: 5px; /* Space for scrollbar */
+    padding-right: 5px; 
 }
 
 .todo-item {
@@ -426,7 +405,17 @@ main {
     padding: 10px 20px;
     background-color: var(--surface-color);
     border-top: 1px solid var(--border-color);
-    text-align: right;
+    display: flex; 
+    justify-content: space-between;
+    align-items: center;
+}
+
+#sync-status {
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+    flex-grow: 1;
+    text-align: left;
+    padding-right: 15px;
 }
 
 .cloud-sync-footer button {
@@ -439,6 +428,9 @@ main {
     font-size: 0.9em;
     margin-left: 10px;
     transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .cloud-sync-footer button:hover {
@@ -447,188 +439,152 @@ main {
 
 
 /* =======================================
-   7. AUTHENTICATION UI
+   7. MOBILE OPTIMIZATION (BREAKPOINT)
    ======================================= */
-/* Overlay to block access to the board when signed out */
-#auth-overlay {
+@media (max-width: 768px) {
+
+    /* Revert header to flex-row layout for simplicity on smaller screens */
+    header {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .app-title {
+        font-size: 1.5em; 
+    }
+
+    .header-actions {
+        order: unset; 
+        align-self: unset;
+        margin-bottom: 0;
+    }
+
+    /* Keep all list columns visible and allow horizontal scrolling */
+    #kanban-board {
+        display: flex; 
+        overflow-x: auto; 
+        padding: 10px;
+        /* The default list-column styles ensure they have min-width and flex-shrink:0 */
+    }
+
+    .list-column {
+        /* Restore from desktop style to enable horizontal scrolling */
+        width: unset;
+        max-width: unset;
+        min-width: 300px; 
+        margin: 0 5px; 
+        border: 1px solid var(--border-color); 
+    }
+
+
+    /* Task Input Form: Stack input fields vertically */
+    .task-add-form {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .task-input-field, .due-date-input, .task-add-btn {
+        width: 100%;
+        padding: 12px; 
+    }
+
+    /* Actions: Move task actions to the right of the text */
+    .todo-item-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    .todo-item-text {
+        width: 100%;
+    }
+    .todo-item-actions {
+        align-self: flex-end;
+    }
+
+    /* Footer: Stack sync buttons */
+    .cloud-sync-footer {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 5px;
+    }
+    .cloud-sync-footer button {
+        width: 48%; 
+        margin: 0;
+        padding: 12px;
+    }
+    #sync-status {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+}
+
+/* =======================================
+   8. LOGIN SCREEN STYLES (NEW)
+   ======================================= */
+#login-screen {
+    display: flex; 
+    justify-content: center;
+    align-items: center;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--background-color); 
-    z-index: 100; /* Ensure it covers everything */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+    background-color: var(--background-color);
+    z-index: 1000;
 }
 
-#auth-container {
+.login-form {
     background-color: var(--surface-color);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     max-width: 400px;
-    width: 100%;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     text-align: center;
 }
 
-#auth-container h2 {
+#login-title {
     color: var(--primary-color);
-    margin-bottom: 15px;
-    font-size: 1.8em;
 }
 
-#auth-container p {
-    margin-bottom: 25px;
-    color: var(--secondary-text-color);
+#email-input, 
+#confirm-email-input, 
+#send-link-btn, 
+#finish-login-btn {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+    width: 100%;
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
 }
 
-#email-form {
+#send-link-btn, #finish-login-btn {
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+#send-link-btn:hover, #finish-login-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+#email-confirm-section {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-#email-input {
-    padding: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 1em;
-    background-color: var(--secondary-bg);
-    color: var(--text-color);
-}
-
-.auth-primary-btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 600;
-    transition: background-color 0.2s;
-}
-
-.auth-primary-btn:hover {
-    background-color: var(--primary-hover);
-}
-
-#auth-message {
-    margin-top: 20px;
-    padding: 10px;
-    border-radius: 4px;
-    color: var(--text-color);
-    background-color: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-}
-.hidden-message {
-    display: none;
-}
-
-
-/* =======================================
-   8. MOBILE OPTIMIZATION (BREAKPOINT)
-   ======================================= */
-@media (max-width: 768px) {
-
-    /* HEADER FIXES: Adjust spacing */
-    header {
-        flex-direction: row;
-        flex-wrap: wrap; 
-        justify-content: space-between;
-    }
-    
-    .app-title {
-        font-size: 1.5em; 
-        flex-grow: 1;
-    }
-
-    .header-actions {
-        gap: 5px;
-    }
-    
-    /* New List Button on Mobile: Make it a standard button size in the header actions */
-    #add-list-btn {
-        padding: 8px 12px;
-        font-size: 0.9em;
-    }
-    
-    /* Auth Button on Mobile */
-    .auth-btn {
-        font-size: 0.9em;
-        padding: 8px 10px;
-    }
-
-
-    /* KANBAN BOARD & LIST FIXES: Horizontal Scroll */
-    #kanban-board {
-        display: flex; /* Keep horizontal flex layout */
-        padding: 10px;
-        overflow-x: auto; /* Re-enable horizontal scrolling */
-        gap: 10px; /* Tighter gap on mobile */
-    }
-
-    .list-column {
-        width: 85vw; /* Make columns take up most of the viewport width */
-        min-width: 85vw; 
-        max-width: 85vw;
-        padding: 10px;
-    }
-
-    /* Task Input Form: Use a grid layout for better touch targets */
-    .task-add-form {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-gap: 5px;
-    }
-    .task-input-field {
-        grid-column: 1 / 3; /* Full width row 1 */
-    }
-    .due-date-input {
-        grid-column: 1 / 2; /* Half width row 2 */
-        width: 100%; 
-    }
-    .task-add-btn {
-        grid-column: 2 / 3; /* Half width row 2 */
-        width: 100%;
-        padding: 8px;
-    }
-
-
-    /* Actions: Ensure actions/text look good */
-    .todo-item-top {
-        flex-direction: row;
-        align-items: center;
-        gap: 5px;
-    }
-    .todo-item-text {
-        width: auto;
-        flex-grow: 1;
-    }
-    .todo-item-actions {
-        align-self: center;
-        flex-shrink: 0;
-    }
-
-    /* Footer: Stack sync buttons */
-    .cloud-sync-footer {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        align-items: stretch;
-    }
-    .cloud-sync-footer button {
-        width: 100%;
-        margin: 0;
-        padding: 12px;
-    }
-    
-    /* Mobile adjustments for Auth UI */
-    #auth-container {
-        margin: 10px;
-        padding: 20px;
-    }
+#auth-error-message {
+    color: var(--danger-color);
+    font-weight: bold;
 }

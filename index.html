@@ -20,45 +20,50 @@
 </head>
 <body>
 
+    <div id="login-screen" style="display: none;"> 
+        <div class="login-form">
+            <h2 id="login-title">Sign In to Cozio</h2>
+            <p id="login-instructions">Enter your email address to receive a secure login link.</p>
+            
+            <input type="email" id="email-input" placeholder="you@example.com" required>
+            <button id="send-link-btn">Send Login Link</button>
+            
+            <div id="email-sent-message" style="display:none; color: var(--success-color); font-weight: bold;">
+                Link sent! Check your inbox and click the link to sign in.
+            </div>
+
+            <div id="email-confirm-section" style="display:none;">
+                <input type="email" id="confirm-email-input" placeholder="Confirm your email" required>
+                <button id="finish-login-btn">Finish Login</button>
+            </div>
+
+            <p id="auth-error-message"></p>
+        </div>
+    </div>
     <header>
         <h1 class="app-title">
             <img src="icon.png" alt="App Icon" class="header-icon">
             Cozio 🚀
         </h1>
         <div class="header-actions">
-            <button id="auth-action-btn" title="Sign In / Sign Out" class="auth-btn"><i class="fas fa-user-circle"></i> Sign In</button>
-            
-            <button id="add-list-btn" title="Create New List" style="display: none;"><i class="fas fa-plus"></i> Add New List</button>
-            
+            <button id="add-list-btn" title="Create New List"><i class="fas fa-plus"></i> Add New List</button>
             <button id="theme-toggle" title="Toggle Dark/Light Mode"><i class="fas fa-sun"></i></button>
         </div>
         
-    </header>
+        </header>
 
-    <main id="app-container">
-        
-        <div id="auth-overlay" style="display: none;">
-            <div id="auth-container">
-                <h2>Welcome to Cozio</h2>
-                <p>Enter your email to sign in or register. We'll send you a secure, passwordless login link.</p>
-                <form id="email-form">
-                    <input type="email" id="email-input" placeholder="Your Email Address" required>
-                    <button type="submit" id="send-link-btn" class="auth-primary-btn">Send Sign-In Link</button>
-                </form>
-                <p id="auth-message" class="hidden-message"></p>
+    <div id="app-wrapper" style="display:none;">
+        <main id="app-container">
+            <div id="kanban-board">
             </div>
-        </div>
+        </main>
         
-        <div id="kanban-board" style="display: none;"> 
-        </div>
-
-    </main>
-    
-    <footer class="cloud-sync-footer">
-        <button id="dropbox-sync-btn" title="Sync with Firebase"><i class="fab fa-google"></i> Sign In to Sync</button>
-        <button id="drive-sync-btn" title="Sync Status"><i class="fab fa-google-drive"></i> Status</button>
-    </footer>
-
+        <footer class="cloud-sync-footer">
+            <span id="sync-status">Status: Checking login...</span>
+            <button id="dropbox-sync-btn" title="Manually Sync Data"><i class="fas fa-sync"></i> Sync</button>
+            <button id="drive-sync-btn" title="Sign Out"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+        </footer>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
