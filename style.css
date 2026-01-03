@@ -548,14 +548,13 @@ header {
     text-align: center;
 }
 
-#login-title {
+.login-form h2 {
     color: var(--primary-color);
 }
 
-#email-input, 
-#confirm-email-input, 
-#send-link-btn, 
-#finish-login-btn {
+#register-form-section input,
+#login-form-section input,
+#email-verification-section input {
     padding: 12px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -564,27 +563,67 @@ header {
     width: 100%;
     background-color: var(--secondary-bg);
     color: var(--text-color);
+    margin-bottom: 10px;
 }
 
-#send-link-btn, #finish-login-btn {
+#register-form-section input:focus,
+#login-form-section input:focus,
+#email-verification-section input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+#register-btn,
+#login-btn,
+#resend-verification-btn,
+#verification-logout-btn {
+    padding: 12px;
     background-color: var(--primary-color);
     color: white;
     cursor: pointer;
     border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
     transition: background-color 0.2s;
+    width: 100%;
+    margin-bottom: 10px;
 }
 
-#send-link-btn:hover, #finish-login-btn:hover {
+#register-btn:hover,
+#login-btn:hover,
+#resend-verification-btn:hover,
+#verification-logout-btn:hover {
     background-color: var(--primary-hover);
 }
 
-#email-confirm-section {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+#register-btn:disabled,
+#login-btn:disabled,
+#resend-verification-btn:disabled,
+#verification-logout-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
-#auth-error-message {
+#register-error-message,
+#login-error-message,
+#verification-error-message {
     color: var(--danger-color);
     font-weight: bold;
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+#register-form-section p:last-child,
+#login-form-section p:last-child {
+    margin-top: 15px;
+    font-size: 0.9em;
+}
+
+#verification-logout-btn {
+    background-color: var(--secondary-text-color);
+}
+
+#verification-logout-btn:hover {
+    background-color: var(--border-color);
 }

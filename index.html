@@ -22,22 +22,46 @@
 
     <div id="login-screen" style="display: none;"> 
         <div class="login-form">
-            <h2 id="login-title">Sign In to Cozio</h2>
-            <p id="login-instructions">Enter your email address to receive a secure login link.</p>
-            
-            <input type="email" id="email-input" placeholder="you@example.com" required>
-            <button id="send-link-btn">Send Login Link</button>
-            
-            <div id="email-sent-message" style="display:none; color: var(--success-color); font-weight: bold;">
-                Link sent! Check your inbox and click the link to sign in.
+            <!-- Registration Form -->
+            <div id="register-form-section">
+                <h2 id="register-title">Create Account</h2>
+                <p id="register-instructions">Sign up with email and password to get started.</p>
+                
+                <input type="email" id="register-email-input" placeholder="you@example.com" required>
+                <input type="password" id="register-password-input" placeholder="Password (min 6 characters)" required>
+                <input type="password" id="register-confirm-password-input" placeholder="Confirm Password" required>
+                <button id="register-btn">Sign Up</button>
+                
+                <p id="register-error-message"></p>
+                <p style="text-align: center; margin-top: 15px; font-size: 0.9em;">
+                    Already have an account? <a href="#" id="switch-to-login-link" style="color: var(--primary-color); cursor: pointer;">Sign In</a>
+                </p>
             </div>
 
-            <div id="email-confirm-section" style="display:none;">
-                <input type="email" id="confirm-email-input" placeholder="Confirm your email" required>
-                <button id="finish-login-btn">Finish Login</button>
+            <!-- Login Form -->
+            <div id="login-form-section" style="display: none;">
+                <h2 id="login-title">Sign In to Cozio</h2>
+                <p id="login-instructions">Enter your email and password to access your tasks.</p>
+                
+                <input type="email" id="login-email-input" placeholder="you@example.com" required>
+                <input type="password" id="login-password-input" placeholder="Password" required>
+                <button id="login-btn">Sign In</button>
+                
+                <p id="login-error-message"></p>
+                <p style="text-align: center; margin-top: 15px; font-size: 0.9em;">
+                    Don't have an account? <a href="#" id="switch-to-register-link" style="color: var(--primary-color); cursor: pointer;">Sign Up</a>
+                </p>
             </div>
 
-            <p id="auth-error-message"></p>
+            <!-- Email Verification Pending -->
+            <div id="email-verification-section" style="display: none;">
+                <h2>Verify Your Email</h2>
+                <p>A verification email has been sent to <strong id="pending-email"></strong></p>
+                <p>Please check your inbox and click the verification link to activate your account.</p>
+                <button id="resend-verification-btn">Resend Verification Email</button>
+                <button id="verification-logout-btn">Back to Login</button>
+                <p id="verification-error-message"></p>
+            </div>
         </div>
     </div>
     <header>

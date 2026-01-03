@@ -7,27 +7,6 @@ let todoLists = JSON.parse(localStorage.getItem('todoLists')) || { 'Main': [] };
 // currentListName is only used when manipulating lists, not for view control anymore.
 let currentListName = localStorage.getItem('currentListName') || 'Main';
 
-// --- DOM Elements ---
-const kanbanBoard = document.getElementById('kanban-board');
-const addListBtn = document.getElementById('add-list-btn');
-const themeToggleBtn = document.getElementById('theme-toggle');
-const dropboxSyncBtn = document.getElementById('dropbox-sync-btn');
-const driveSyncBtn = document.getElementById('drive-sync-btn'); // Repurposed for Sign Out
-// REMOVED: const listSelector = document.getElementById('list-select'); 
-
-// NEW: Login/Auth Elements
-const appWrapper = document.getElementById('app-wrapper'); 
-const loginScreen = document.getElementById('login-screen');
-const emailInput = document.getElementById('email-input');
-const sendLinkBtn = document.getElementById('send-link-btn');
-const emailSentMessage = document.getElementById('email-sent-message');
-const emailConfirmSection = document.getElementById('email-confirm-section');
-const confirmEmailInput = document.getElementById('confirm-email-input');
-const finishLoginBtn = document.getElementById('finish-login-btn');
-const authErrorMessage = document.getElementById('auth-error-message');
-const syncStatus = document.getElementById('sync-status');
-
-
 // --- Firebase Configuration ---
 // <<< CRITICAL: REPLACE ALL OF THESE WITH YOUR ACTUAL CONFIG FROM FIREBASE CONSOLE >>>
 const FIREBASE_CONFIG = {
@@ -41,17 +20,48 @@ const FIREBASE_CONFIG = {
   measurementId: "G-YKN7LSDDLN"
 };
 
-// Action code settings for the email link
-// This URL must match your authorized domain in Firebase Console.
-const ACTION_CODE_SETTINGS = {
-  url: window.location.href, // Use the current page URL as the destination after verification
-  handleCodeInApp: true,
-};
-
 let firebaseApp = null;
 let database = null;
 let auth = null; 
 let currentUser = null; 
+
+// --- DOM Elements ---
+const kanbanBoard = document.getElementById('kanban-board');
+const addListBtn = document.getElementById('add-list-btn');
+const themeToggleBtn = document.getElementById('theme-toggle');
+const dropboxSyncBtn = document.getElementById('dropbox-sync-btn');
+const driveSyncBtn = document.getElementById('drive-sync-btn');
+
+// NEW: Login/Auth Elements
+const appWrapper = document.getElementById('app-wrapper'); 
+const loginScreen = document.getElementById('login-screen');
+
+// Registration Form Elements
+const registerFormSection = document.getElementById('register-form-section');
+const registerEmailInput = document.getElementById('register-email-input');
+const registerPasswordInput = document.getElementById('register-password-input');
+const registerConfirmPasswordInput = document.getElementById('register-confirm-password-input');
+const registerBtn = document.getElementById('register-btn');
+const registerErrorMessage = document.getElementById('register-error-message');
+const switchToLoginLink = document.getElementById('switch-to-login-link');
+
+// Login Form Elements
+const loginFormSection = document.getElementById('login-form-section');
+const loginEmailInput = document.getElementById('login-email-input');
+const loginPasswordInput = document.getElementById('login-password-input');
+const loginBtn = document.getElementById('login-btn');
+const loginErrorMessage = document.getElementById('login-error-message');
+const switchToRegisterLink = document.getElementById('switch-to-register-link');
+
+// Email Verification Section
+const emailVerificationSection = document.getElementById('email-verification-section');
+const pendingEmailDisplay = document.getElementById('pending-email');
+const resendVerificationBtn = document.getElementById('resend-verification-btn');
+const verificationLogoutBtn = document.getElementById('verification-logout-btn');
+const verificationErrorMessage = document.getElementById('verification-error-message');
+
+const syncStatus = document.getElementById('sync-status');
+
 
 // --- Utility Functions ---
 
@@ -657,142 +667,265 @@ function listenForFirebaseChanges() {
 }
 
 
-// --- Authentication Functions (Email Link Auth) ---
+// --- Authentication Functions (Email/Password Auth) ---
 
 /**
- * Sends the magic link to the provided email address.
+ * Validates email format.
  */
-function sendLoginLink() {
-    const email = emailInput.value.trim();
-    if (!email) {
-        authErrorMessage.textContent = 'Please enter a valid email address.';
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+/**
+ * Handles user registration with email and password.
+ */
+function registerUser() {
+    const email = registerEmailInput.value.trim();
+    const password = registerPasswordInput.value;
+    const confirmPassword = registerConfirmPasswordInput.value;
+    
+    registerErrorMessage.textContent = '';
+
+    // Validation
+    if (!email || !password || !confirmPassword) {
+        registerErrorMessage.textContent = 'Please fill in all fields.';
+        return;
+    }
+
+    if (!isValidEmail(email)) {
+        registerErrorMessage.textContent = 'Please enter a valid email address.';
+        return;
+    }
+
+    if (password.length < 6) {
+        registerErrorMessage.textContent = 'Password must be at least 6 characters.';
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        registerErrorMessage.textContent = 'Passwords do not match.';
+        return;
+    }
+
+    registerBtn.disabled = true;
+    registerErrorMessage.textContent = 'Creating account...';
+
+    auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            // Account created successfully
+            const user = userCredential.user;
+            console.log("User registered:", user.uid);
+
+            // Send verification email
+            return user.sendEmailVerification();
+        })
+        .then(() => {
+            // Verification email sent
+            console.log("Verification email sent.");
+            showEmailVerificationPending(email);
+            registerErrorMessage.textContent = '';
+        })
+        .catch((error) => {
+            console.error("Registration error:", error);
+            registerErrorMessage.textContent = `Error: ${error.message}`;
+            registerBtn.disabled = false;
+        });
+}
+
+/**
+ * Handles user login with email and password.
+ */
+function loginUser() {
+    const email = loginEmailInput.value.trim();
+    const password = loginPasswordInput.value;
+    
+    loginErrorMessage.textContent = '';
+
+    // Validation
+    if (!email || !password) {
+        loginErrorMessage.textContent = 'Please enter both email and password.';
+        return;
+    }
+
+    loginBtn.disabled = true;
+    loginErrorMessage.textContent = 'Signing in...';
+
+    auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+            // Sign-in successful. onAuthStateChanged will handle the rest.
+            loginErrorMessage.textContent = '';
+        })
+        .catch((error) => {
+            console.error("Login error:", error);
+            
+            // Provide user-friendly error messages
+            if (error.code === 'auth/user-not-found') {
+                loginErrorMessage.textContent = 'No account found with this email.';
+            } else if (error.code === 'auth/wrong-password') {
+                loginErrorMessage.textContent = 'Incorrect password.';
+            } else {
+                loginErrorMessage.textContent = `Error: ${error.message}`;
+            }
+            loginBtn.disabled = false;
+        });
+}
+
+/**
+ * Shows the email verification pending screen.
+ */
+function showEmailVerificationPending(email) {
+    registerFormSection.style.display = 'none';
+    loginFormSection.style.display = 'none';
+    emailVerificationSection.style.display = 'block';
+    pendingEmailDisplay.textContent = email;
+    verificationErrorMessage.textContent = '';
+    resendVerificationBtn.disabled = false;
+}
+
+/**
+ * Resends the verification email to the current user.
+ */
+function resendVerificationEmail() {
+    if (!currentUser) {
+        verificationErrorMessage.textContent = 'No user found. Please try again.';
+        return;
+    }
+
+    resendVerificationBtn.disabled = true;
+    verificationErrorMessage.textContent = 'Sending verification email...';
+
+    currentUser.sendEmailVerification()
+        .then(() => {
+            verificationErrorMessage.textContent = 'Verification email resent. Please check your inbox.';
+            setTimeout(() => {
+                resendVerificationBtn.disabled = false;
+            }, 3000); // Allow resending after 3 seconds
+        })
+        .catch((error) => {
+            console.error("Resend verification error:", error);
+            verificationErrorMessage.textContent = `Error: ${error.message}`;
+            resendVerificationBtn.disabled = false;
+        });
+}
+
+/**
+ * Logs out the current user.
+ */
+function logoutUser() {
+    auth.signOut()
+        .then(() => {
+            console.log("User signed out.");
+            resetLoginUI();
+        })
+        .catch((error) => {
+            console.error("Sign out error:", error);
+            alert('An error occurred during sign out.');
+        });
+}
+
+/**
+ * Resets the login UI to show the registration form.
+ */
+function resetLoginUI() {
+    registerFormSection.style.display = 'block';
+    loginFormSection.style.display = 'none';
+    emailVerificationSection.style.display = 'none';
+    
+    registerEmailInput.value = '';
+    registerPasswordInput.value = '';
+    registerConfirmPasswordInput.value = '';
+    registerErrorMessage.textContent = '';
+    registerBtn.disabled = false;
+
+    loginEmailInput.value = '';
+    loginPasswordInput.value = '';
+    loginErrorMessage.textContent = '';
+    loginBtn.disabled = false;
+
+    verificationErrorMessage.textContent = '';
+}
+
+/**
+ * Switches between registration and login forms.
+ */
+function switchToLoginForm() {
+    registerFormSection.style.display = 'none';
+    loginFormSection.style.display = 'block';
+    registerErrorMessage.textContent = '';
+    loginErrorMessage.textContent = '';
+}
+
+function switchToRegisterForm() {
+    registerFormSection.style.display = 'block';
+    loginFormSection.style.display = 'none';
+    registerErrorMessage.textContent = '';
+    loginErrorMessage.textContent = '';
+}
+
+// --- Firebase Synchronization Logic ---
+
+/**
+ * Writes the local todoLists state to the Firebase Realtime Database.
+ */
+function syncStateToFirebase() {
+    // Guard: Only sync if authenticated
+    if (!currentUser || !database) {
+        updateFooterStatus('Status: Not logged in. Cannot sync.');
         return;
     }
     
-    authErrorMessage.textContent = 'Sending link...';
-    sendLinkBtn.disabled = true;
-
-    auth.sendSignInLinkToEmail(email, ACTION_CODE_SETTINGS)
+    // The data path is /users/{uid}/data
+    const dataRef = database.ref('users/' + currentUser.uid + '/data');
+    dataRef.set(todoLists)
         .then(() => {
-            // The link was successfully sent. Inform the user.
-            window.localStorage.setItem('emailForSignIn', email);
-            emailInput.style.display = 'none';
-            sendLinkBtn.style.display = 'none';
-            emailSentMessage.style.display = 'block';
-            authErrorMessage.textContent = ''; // Clear status
+            console.log("Firebase sync successful.");
+            updateFooterStatus('Status: Synced with cloud.');
         })
-        .catch((error) => {
-            console.error("Error sending sign-in link:", error);
-            authErrorMessage.textContent = `Error: ${error.message}. Please check your email and try again.`;
-            sendLinkBtn.disabled = false;
+        .catch(error => {
+            console.error("Firebase sync error:", error);
+            updateFooterStatus('Status: Sync Error.');
         });
 }
 
 /**
- * Handles sign-in when the user returns from clicking the email link.
+ * Sets up a listener for real-time changes from Firebase.
  */
-function handleEmailLinkSignIn() {
-    // Check if the current URL is a sign-in link
-    if (auth && auth.isSignInWithEmailLink(window.location.href)) {
-        loginScreen.style.display = 'flex'; // Show the login box while processing
-
-        let email = window.localStorage.getItem('emailForSignIn');
-        if (!email) {
-            // The user may have opened the link on a different browser/device.
-            // Prompt them to confirm the email.
-            document.getElementById('login-title').textContent = 'Finalize Sign In';
-            document.getElementById('login-instructions').textContent = 'Please confirm the email address used to receive the link.';
-
-            emailInput.style.display = 'none';
-            sendLinkBtn.style.display = 'none';
-            emailSentMessage.style.display = 'none';
-            emailConfirmSection.style.display = 'flex'; 
-            
-            // Attach listener for finishing the sign-in
-            finishLoginBtn.addEventListener('click', () => {
-                const confirmedEmail = confirmEmailInput.value.trim();
-                if (confirmedEmail) {
-                    processSignIn(confirmedEmail);
-                } else {
-                    authErrorMessage.textContent = 'Please enter your email to finalize login.';
-                }
-            }, { once: true }); 
-            
-            return; // Wait for user input
-        }
-
-        // We have the email, proceed with sign-in
-        processSignIn(email);
+function listenForFirebaseChanges() {
+    // Guard: Only listen if authenticated
+    if (!currentUser || !database) {
+        return;
     }
-}
-
-/**
- * Finalizes the sign-in using the email and the link data.
- */
-function processSignIn(email) {
-    authErrorMessage.textContent = 'Verifying link... Please wait.';
-    finishLoginBtn.disabled = true;
-    sendLinkBtn.disabled = true;
     
-    auth.signInWithEmailLink(email, window.location.href)
-        .then(() => {
-            // Success! The user is now signed in.
-            window.localStorage.removeItem('emailForSignIn');
-            // Remove the link parameters from the URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-            // The onAuthStateChanged observer will handle the UI update
-            resetLoginUI();
-        })
-        .catch((error) => {
-            console.error("Error signing in with email link:", error);
-            authErrorMessage.textContent = `Login failed: ${error.message}. Please try sending a new link.`;
-            // Reset UI to initial state
-            resetLoginUI();
-        });
-}
+    const dataRef = database.ref('users/' + currentUser.uid + '/data');
+    
+    // This 'value' listener triggers anytime data at the path changes.
+    dataRef.on('value', (snapshot) => {
+        const remoteData = snapshot.val();
+        if (remoteData) {
+            // Check if the remote data is newer/different
+            const localDataString = JSON.stringify(todoLists);
+            const remoteDataString = JSON.stringify(remoteData);
 
-/**
- * Resets the login form UI to the initial 'Send Link' state.
- */
-function resetLoginUI() {
-    // Make sure all elements are in their default, pre-login state
-    emailInput.style.display = 'block';
-    sendLinkBtn.style.display = 'block';
-    sendLinkBtn.disabled = false;
-    emailSentMessage.style.display = 'none';
-    emailConfirmSection.style.display = 'none';
-    document.getElementById('login-title').textContent = 'Sign In to Cozio';
-    document.getElementById('login-instructions').textContent = 'Enter your email address to receive a secure login link.';
-    authErrorMessage.textContent = '';
-    emailInput.value = '';
-    confirmEmailInput.value = '';
-}
-
-/**
- * The primary synchronization function (now maps to Firebase init/check).
- */
-function syncWithFirebase() {
-    // If the user clicks sync, we simply ensure the local data is pushed up immediately.
-    syncStateToFirebase();
-}
-
-/**
- * Repurposed for Sign Out.
- */
-function syncWithDrive() {
-    if (currentUser) {
-        if (confirm('Are you sure you want to sign out?')) {
-            firebase.auth().signOut().then(() => {
-                // Sign-out successful. onAuthStateChanged handles UI.
-                alert('Signed out successfully.');
-            }).catch((error) => {
-                console.error("Sign out error:", error);
-                alert('An error occurred during sign out.');
-            });
+            if (localDataString !== remoteDataString) {
+                console.log("Remote changes detected. Updating local state.");
+                todoLists = remoteData;
+                localStorage.setItem('todoLists', remoteDataString);
+                renderKanbanBoard();
+                updateFooterStatus('Status: Synced with cloud.');
+            }
+        } else {
+            // If remote data is empty (first login), push the local state up.
+            syncStateToFirebase();
         }
-    } else {
-        alert('You are currently signed out.');
-    }
+    }, (error) => {
+        console.error("Firebase listener error:", error);
+        updateFooterStatus('Status: Sync Error.');
+    });
+    
+    // Update the Sync button to indicate Firebase connection
+    dropboxSyncBtn.innerHTML = '<i class="fas fa-sync"></i> Sync'; // Simplified text/icon
+    updateFooterStatus('Status: Synced with cloud.');
 }
 
 
@@ -813,38 +946,37 @@ function initFirebase() {
         database = firebase.database();
         auth = firebase.auth();
     }
-    
-    // Check if the user is returning from the login link
-    handleEmailLinkSignIn();
 
-    // Auth State Observer: Controls app visibility and listens for data
+    // Auth State Observer: Controls app visibility based on user and email verification
     auth.onAuthStateChanged((user) => {
         if (user) {
-            // User is signed in.
+            // User is signed in
             currentUser = user;
             console.log("User signed in:", currentUser.uid);
             
-            // SHOW APP, HIDE LOGIN
-            appWrapper.style.display = 'flex'; // Show the main application wrapper
-            loginScreen.style.display = 'none'; // Hide the login screen
-            
-            // Start listening for user-specific data
-            listenForFirebaseChanges();
-            
-            updateFooterStatus(`Logged in: ${user.email || 'via Email Link'}`);
-            
+            // Check if email is verified
+            if (user.emailVerified) {
+                // Email is verified - show the app
+                appWrapper.style.display = 'flex';
+                loginScreen.style.display = 'none';
+                listenForFirebaseChanges();
+                updateFooterStatus(`Logged in: ${user.email}`);
+                renderKanbanBoard();
+            } else {
+                // Email is not verified - show verification pending screen
+                appWrapper.style.display = 'none';
+                loginScreen.style.display = 'flex';
+                showEmailVerificationPending(user.email);
+                updateFooterStatus('Email verification pending.');
+            }
         } else {
-            // User is signed out.
+            // User is signed out
             currentUser = null;
             console.log("User is signed out. Showing login screen.");
-
-            // HIDE APP, SHOW LOGIN
-            appWrapper.style.display = 'none'; // Hide the main application board
-            // Only show login screen if we are not actively handling a redirect
-            if (!auth.isSignInWithEmailLink(window.location.href)) {
-                 loginScreen.style.display = 'flex'; 
-            }
-           
+            
+            appWrapper.style.display = 'none';
+            loginScreen.style.display = 'flex';
+            resetLoginUI();
             updateFooterStatus('Signed out. Please log in.');
         }
     });
@@ -870,11 +1002,22 @@ function initApp() {
     themeToggleBtn.addEventListener('click', toggleTheme);
     
     // Attach Auth Event Listeners
-    sendLinkBtn.addEventListener('click', sendLoginLink);
+    registerBtn.addEventListener('click', registerUser);
+    loginBtn.addEventListener('click', loginUser);
+    switchToLoginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchToLoginForm();
+    });
+    switchToRegisterLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchToRegisterForm();
+    });
+    resendVerificationBtn.addEventListener('click', resendVerificationEmail);
+    verificationLogoutBtn.addEventListener('click', logoutUser);
     
     // Repurposed Sync Buttons
     dropboxSyncBtn.addEventListener('click', syncWithFirebase); 
-    driveSyncBtn.addEventListener('click', syncWithDrive); // Repurposed for Sign Out
+    driveSyncBtn.addEventListener('click', syncWithDrive);
 
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.list-actions-dropdown')) {
@@ -884,7 +1027,6 @@ function initApp() {
         }
     });
 
-    // Handle resize events (no more mobile view logic inside, just re-render)
     window.addEventListener('resize', () => renderKanbanBoard());
 }
 

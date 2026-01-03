@@ -1,5 +1,5 @@
 {
-  "name": "Cozio Kanban Tasks",
+  "name": "Cozio Tasks",
   "short_name": "Cozio Tasks",
   "description": "Simple Kanban task management board with cross-device synchronization.",
   "start_url": "./index.html",
